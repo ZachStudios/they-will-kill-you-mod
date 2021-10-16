@@ -625,6 +625,10 @@ class PlayState extends MusicBeatState
 					bg.antialiasing = false;
 					add(bg);
 				}
+
+				case 'number7': //Week 7
+				var bg:BGSprite = new BGSprite('number7', -600, -200, 0.9, 0.9);
+				add(bg);
 		}
 
 		if(isPixelStage) {
@@ -2064,14 +2068,17 @@ class PlayState extends MusicBeatState
 				}
 
 				if(updateTime) {
-					var curTime:Float = Conductor.songPosition - ClientPrefs.noteOffset;
+					var curTime:Float = FlxG.sound.music.time - ClientPrefs.noteOffset;
 					if(curTime < 0) curTime = 0;
 					songPercent = (curTime / songLength);
 
 					var secondsTotal:Int = Math.floor((songLength - curTime) / 1000);
 					if(secondsTotal < 0) secondsTotal = 0;
 
-					timeTxt.text = FlxStringUtil.formatTime(secondsTotal, false);
+					var minutesRemaining:Int = Math.floor(secondsTotal / 60);
+					var secondsRemaining:String = '' + secondsTotal % 60;
+					if(secondsRemaining.length < 2) secondsRemaining = '0' + secondsRemaining; //Dunno how to make it display a zero first in Haxe lol
+					timeTxt.text = minutesRemaining + ':' + secondsRemaining;
 				}
 			}
 
@@ -2673,16 +2680,8 @@ class PlayState extends MusicBeatState
 				}
 
 			case 'Change Character':
-				var charType:Int = 0;
-				switch(value1) {
-					case 'gf' | 'girlfriend':
-						charType = 2;
-					case 'dad' | 'opponent':
-						charType = 1;
-					default:
-						charType = Std.parseInt(value1);
-						if(Math.isNaN(charType)) charType = 0;
-				}
+				var charType:Int = Std.parseInt(value1);
+				if(Math.isNaN(charType)) charType = 0;
 
 				switch(charType) {
 					case 0:
@@ -2865,11 +2864,8 @@ class PlayState extends MusicBeatState
 		if(achievementObj != null) {
 			return;
 		} else {
-			var achieve:String = checkForAchievement(['week1_nomiss', 'week2_nomiss', 'week3_nomiss', 'week4_nomiss',
-				'week5_nomiss', 'week6_nomiss', 'week7_nomiss', 'ur_bad',
-				'ur_good', 'hype', 'two_keys', 'toastie', 'debugger']);
-
-			if(achieve != null) {
+			var achieve:Int = checkForAchievement([1, 2, 3, 4, 5, 6, 7, 8, 9, 12, 13, 14, 15]);
+			if(achieve > -1) {
 				startAchievement(achieve);
 				return;
 			}
@@ -2988,7 +2984,7 @@ class PlayState extends MusicBeatState
 
 	#if ACHIEVEMENTS_ALLOWED
 	var achievementObj:AchievementObject = null;
-	function startAchievement(achieve:String) {
+	function startAchievement(achieve:Int) {
 		achievementObj = new AchievementObject(achieve, camOther);
 		achievementObj.onFinish = achievementEnd;
 		add(achievementObj);
@@ -3285,8 +3281,8 @@ class PlayState extends MusicBeatState
 				}
 
 				#if ACHIEVEMENTS_ALLOWED
-				var achieve:String = checkForAchievement(['oversinging']);
-				if (achieve != null) {
+				var achieve:Int = checkForAchievement([11]);
+				if (achieve > -1) {
 					startAchievement(achieve);
 				}
 				#end
@@ -3326,7 +3322,7 @@ class PlayState extends MusicBeatState
 		});
 
 		health -= daNote.missHealth; //For testing purposes
-		//trace(daNote.missHealth);
+		trace(daNote.missHealth);
 		songMisses++;
 		vocals.volume = 0;
 		RecalculateRating();
@@ -3665,8 +3661,8 @@ class PlayState extends MusicBeatState
 
 				#if ACHIEVEMENTS_ALLOWED
 				Achievements.henchmenDeath++;
-				var achieve:String = checkForAchievement(['roadkill_enthusiast']);
-				if (achieve != null) {
+				var achieve:Int = checkForAchievement([10]);
+				if(achieve > -1) {
 					startAchievement(achieve);
 				} else {
 					FlxG.save.data.henchmenDeath = Achievements.henchmenDeath;
@@ -3929,56 +3925,42 @@ class PlayState extends MusicBeatState
 	}
 
 	#if ACHIEVEMENTS_ALLOWED
-	private function checkForAchievement(achievesToCheck:Array<String>):String {
-		for (i in 0...achievesToCheck.length) {
-			var achievementName:String = achievesToCheck[i];
-			if(!Achievements.isAchievementUnlocked(achievementName)) {
-				var unlock:Bool = false;
-				switch(achievementName)
-				{
-					case 'week1_nomiss' | 'week2_nomiss' | 'week3_nomiss' | 'week4_nomiss' | 'week5_nomiss' | 'week6_nomiss' | 'week7_nomiss':
-						if(isStoryMode && campaignMisses + songMisses < 1 && CoolUtil.difficultyString() == 'HARD' && storyPlaylist.length <= 1 && !changedDifficulty && !usedPractice)
-						{
-							var weekName:String = WeekData.getWeekFileName();
-							switch(weekName) //I know this is a lot of duplicated code, but it's easier readable and you can add weeks with different names than the achievement tag
-							{
-								case 'week1':
-									if(achievementName == 'week1_nomiss') unlock = true;
-								case 'week2':
-									if(achievementName == 'week2_nomiss') unlock = true;
-								case 'week3':
-									if(achievementName == 'week3_nomiss') unlock = true;
-								case 'week4':
-									if(achievementName == 'week4_nomiss') unlock = true;
-								case 'week5':
-									if(achievementName == 'week5_nomiss') unlock = true;
-								case 'week6':
-									if(achievementName == 'week6_nomiss') unlock = true;
-								case 'week7':
-									if(achievementName == 'week7_nomiss') unlock = true;
-							}
+	private function checkForAchievement(arrayIDs:Array<Int>):Int {
+		for (i in 0...arrayIDs.length) {
+			if(!Achievements.achievementsUnlocked[arrayIDs[i]][1]) {
+				switch(arrayIDs[i]) {
+					case 1 | 2 | 3 | 4 | 5 | 6 | 7:
+						if(isStoryMode && campaignMisses + songMisses < 1 && CoolUtil.difficultyString() == 'HARD' &&
+						storyPlaylist.length <= 1 && WeekData.getWeekFileName() == ('week' + arrayIDs[i]) && !changedDifficulty && !usedPractice) {
+							Achievements.unlockAchievement(arrayIDs[i]);
+							return arrayIDs[i];
 						}
-					case 'ur_bad':
+					case 8:
 						if(ratingPercent < 0.2 && !practiceMode && !cpuControlled) {
-							unlock = true;
+							Achievements.unlockAchievement(arrayIDs[i]);
+							return arrayIDs[i];
 						}
-					case 'ur_good':
+					case 9:
 						if(ratingPercent >= 1 && !usedPractice && !cpuControlled) {
-							unlock = true;
+							Achievements.unlockAchievement(arrayIDs[i]);
+							return arrayIDs[i];
 						}
-					case 'roadkill_enthusiast':
+					case 10:
 						if(Achievements.henchmenDeath >= 100) {
-							unlock = true;
+							Achievements.unlockAchievement(arrayIDs[i]);
+							return arrayIDs[i];
 						}
-					case 'oversinging':
+					case 11:
 						if(boyfriend.holdTimer >= 20 && !usedPractice) {
-							unlock = true;
+							Achievements.unlockAchievement(arrayIDs[i]);
+							return arrayIDs[i];
 						}
-					case 'hype':
+					case 12:
 						if(!boyfriendIdled && !usedPractice) {
-							unlock = true;
+							Achievements.unlockAchievement(arrayIDs[i]);
+							return arrayIDs[i];
 						}
-					case 'two_keys':
+					case 13:
 						if(!usedPractice) {
 							var howManyPresses:Int = 0;
 							for (j in 0...keysPressed.length) {
@@ -3986,26 +3968,24 @@ class PlayState extends MusicBeatState
 							}
 
 							if(howManyPresses <= 2) {
-								unlock = true;
+								Achievements.unlockAchievement(arrayIDs[i]);
+								return arrayIDs[i];
 							}
 						}
-					case 'toastie':
+					case 14:
 						if(/*ClientPrefs.framerate <= 60 &&*/ ClientPrefs.lowQuality && !ClientPrefs.globalAntialiasing && !ClientPrefs.imagesPersist) {
-							unlock = true;
+							Achievements.unlockAchievement(arrayIDs[i]);
+							return arrayIDs[i];
 						}
-					case 'debugger':
+					case 15:
 						if(Paths.formatToSongPath(SONG.song) == 'test' && !usedPractice) {
-							unlock = true;
+							Achievements.unlockAchievement(arrayIDs[i]);
+							return arrayIDs[i];
 						}
-				}
-
-				if(unlock) {
-					Achievements.unlockAchievement(achievementName);
-					return achievementName;
 				}
 			}
 		}
-		return null;
+		return -1;
 	}
 	#end
 
