@@ -1,0 +1,43 @@
+{
+	"storyName": "STUDENT WATCHES PORN AND GETS NAKED",
+	"hideFreeplay": false,
+	"weekBackground": "they",
+	"weekBefore": "tutorial",
+	"startUnlocked": true,
+	"weekCharacters": [
+		"",
+		"",
+		""
+	],
+	"songs": [
+		[
+			"Porn",
+			"test",
+			[
+				146,
+				146,
+				146
+			]
+		],
+		[
+			"Big-Mac",
+			"test",
+			[
+				146,
+				146,
+				146
+			]
+		],
+		[
+			"Chowder-Condom",
+			"test",
+			[
+				146,
+				146,
+				146
+			]
+		]
+	],
+	"hideStoryMode": false,
+	"weekName": "theywillkillyou"
+}
